@@ -3,60 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Management Dashboard</title>
+    <title>Enterprise Product Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 font-sans p-8">
+<body class="bg-gray-50 font-sans p-4 md:p-8">
 
-<div class="max-w-4xl mx-auto">
-    <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">📦 Product Management Dashboard</h1>
+<div class="max-w-5xl mx-auto">
+    <h1 class="text-3xl font-extrabold text-gray-900 mb-6 text-center tracking-tight">📦 Inventory & Product Control</h1>
 
-    <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-        <h2 id="form-title" class="text-xl font-semibold mb-4 text-gray-700">Add New Product</h2>
-        <form id="product-form" class="space-y-4">
-            <input type="hidden" id="product-id">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-600">Product Name</label>
-                    <input type="text" id="product-name" required class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-400 outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600">Price ($)</label>
-                    <input type="number" id="product-price" step="0.01" required class="w-full mt-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-400 outline-none">
-                </div>
-            </div>
-            <div class="flex gap-2">
-                <button type="submit" id="submit-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition">Save Product</button>
-                <button type="button" id="cancel-btn" onclick="resetForm()" class="hidden bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-md font-medium transition">Cancel</button>
-            </div>
-        </form>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+            <span class="text-sm font-medium text-gray-400 uppercase">Total Items</span>
+            <span id="stat-total-items" class="text-2xl font-bold text-blue-600">0</span>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+            <span class="text-sm font-medium text-gray-400 uppercase">Total Valuation</span>
+            <span id="stat-total-value" class="text-2xl font-bold text-green-600">$0.00</span>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+            <span class="text-sm font-medium text-gray-400 uppercase">Average Price</span>
+            <span id="stat-avg-price" class="text-2xl font-bold text-purple-600">$0.00</span>
+        </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <table class="w-full text-left border-collapse">
-            <thead>
-            <tr class="bg-gray-800 text-white">
-                <th class="p-4">ID</th>
-                <th class="p-4">Name</th>
-                <th class="p-4">Price</th>
-                <th class="p-4 text-center">Actions</th>
-            </tr>
-            </thead>
-            <tbody id="product-table-body" class="divide-y divide-gray-200">
-            </tbody>
-        </table>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-fit">
+            <h2 id="form-title" class="text-lg font-bold mb-4 text-gray-800">Add New Product</h2>
+            <form id="product-form" class="space-y-4">
+                <input type="hidden" id="product-id">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600">Product Name</label>
+                    <input type="text" id="product-name" required minlength="2" maxlength="50" placeholder="e.g., Wireless Mouse" class="w-full mt-1 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600">Price ($)</label>
+                    <input type="number" id="product-price" step="0.01" min="0" required placeholder="0.00" class="w-full mt-1 p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="submit" id="submit-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition shadow-sm">Save Item</button>
+                    <button type="button" id="cancel-btn" onclick="resetForm()" class="hidden bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium px-4 py-2 rounded-lg transition">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="lg:col-span-2 space-y-4">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center">
+                <input type="text" id="search-input" oninput="filterProducts()" placeholder="🔍 Search products by name..." class="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                    <tr class="bg-gray-50 border-b border-gray-100 text-gray-600 text-sm font-semibold">
+                        <th class="p-4 w-16">ID</th>
+                        <th class="p-4">Name</th>
+                        <th class="p-4 w-28">Price</th>
+                        <th class="p-4 text-center w-40">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="product-table-body" class="divide-y divide-gray-100 text-gray-700">
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
     const API_URL = 'http://localhost:8080/api/products';
-
+    let allProducts = []; // Local cache copy for instant searching
 
     document.addEventListener('DOMContentLoaded', function() {
         fetchProducts();
     });
 
-
+    // Form Submit Actions
     document.getElementById('product-form').addEventListener('submit', function(e) {
         e.preventDefault();
 
@@ -66,83 +87,108 @@
 
         const productData = { name: name, price: price };
 
-        if (id) {
+        const requestConfig = id ? {
+            url: API_URL + '/' + id,
+            method: 'PUT'
+        } : {
+            url: API_URL,
+            method: 'POST'
+        };
 
-            fetch(API_URL + '/' + id, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(productData)
-            }).then(function() {
-                fetchProducts();
-                resetForm();
-            });
-        } else {
-
-            fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(productData)
-            }).then(function() {
-                fetchProducts();
-                resetForm();
-            });
-        }
+        fetch(requestConfig.url, {
+            method: requestConfig.method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(productData)
+        })
+        .then(function(res) {
+            if(!res.ok) throw new Error("Validation Failed");
+            return res.json();
+        })
+        .then(function() {
+            fetchProducts();
+            resetForm();
+        })
+        .catch(err => alert("Error saving data. Verify constraints are met (Name length 2-50, Price ≥ 0)."));
     });
 
-
+    // Read All Products
     function fetchProducts() {
         fetch(API_URL)
             .then(function(res) { return res.json(); })
             .then(function(products) {
-                const tbody = document.getElementById('product-table-body');
-                tbody.innerHTML = '';
-
-                if (products.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">No products found. Add one above!</td></tr>';
-                    return;
-                }
-
-                products.forEach(function(product) {
-
-                    var row = '<tr class="hover:bg-gray-50">' +
-                        '<td class="p-4 font-semibold text-gray-700">' + product.id + '</td>' +
-                        '<td class="p-4 text-gray-600">' + product.name + '</td>' +
-                        '<td class="p-4 text-gray-600">$' + product.price.toFixed(2) + '</td>' +
-                        '<td class="p-4 text-center space-x-2">' +
-                            '<button onclick="editProduct(' + product.id + ', \'' + product.name + '\', ' + product.price + ')" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm transition">Edit</button>' +
-                            '<button onclick="deleteProduct(' + product.id + ')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition">Delete</button>' +
-                        '</td>' +
-                    '</tr>';
-                    tbody.innerHTML += row;
-                });
+                allProducts = products; // Save to master array
+                renderTable(allProducts);
+                calculateMetrics(allProducts);
             });
     }
 
+    // Render Table Component
+    function renderTable(productsList) {
+        const tbody = document.getElementById('product-table-body');
+        tbody.innerHTML = '';
 
+        if (productsList.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-gray-400 italic">No products match your criteria.</td></tr>';
+            return;
+        }
+
+        productsList.forEach(function(product) {
+            var row = '<tr class="hover:bg-gray-50/50 transition-colors">' +
+                '<td class="p-4 font-mono text-xs text-gray-400">' + product.id + '</td>' +
+                '<td class="p-4 font-medium text-gray-800">' + product.name + '</td>' +
+                '<td class="p-4 font-semibold text-gray-900">$' + product.price.toFixed(2) + '</td>' +
+                '<td class="p-4 text-center space-x-1">' +
+                    '<button onclick="editProduct(' + product.id + ', \'' + product.name + '\', ' + product.price + ')" class="text-amber-600 hover:bg-amber-50 px-2.5 py-1 rounded-md text-sm font-medium transition">Edit</button>' +
+                    '<button onclick="deleteProduct(' + product.id + ')" class="text-red-600 hover:bg-red-50 px-2.5 py-1 rounded-md text-sm font-medium transition">Delete</button>' +
+                '</td>' +
+            '</tr>';
+            tbody.innerHTML += row;
+        });
+    }
+
+    // Search Filtering Logic (In-Memory for extreme speed)
+    function filterProducts() {
+        const query = document.getElementById('search-input').value.toLowerCase();
+        const filtered = allProducts.filter(p => p.name.toLowerCase().includes(query));
+        renderTable(filtered);
+    }
+
+    // Analytics Calculator
+    function calculateMetrics(products) {
+        const count = products.length;
+        const totalValuation = products.reduce((sum, p) => sum + p.price, 0);
+        const avg = count > 0 ? (totalValuation / count) : 0;
+
+        document.getElementById('stat-total-items').innerText = count;
+        document.getElementById('stat-total-value').innerText = '$' + totalValuation.toFixed(2);
+        document.getElementById('stat-avg-price').innerText = '$' + avg.toFixed(2);
+    }
+
+    // Pre-Populate Fields for Editing
     function editProduct(id, name, price) {
         document.getElementById('product-id').value = id;
         document.getElementById('product-name').value = name;
         document.getElementById('product-price').value = price;
 
-        document.getElementById('form-title').innerText = "Edit Product #" + id;
-        document.getElementById('submit-btn').innerText = "Update Product";
+        document.getElementById('form-title').innerText = "Modify Product #" + id;
+        document.getElementById('submit-btn').innerText = "Apply Updates";
         document.getElementById('cancel-btn').classList.remove('hidden');
     }
 
-
+    // Delete Product
     function deleteProduct(id) {
-        if (confirm('Are you sure you want to delete this product?')) {
+        if (confirm('Permanently remove this product from inventory?')) {
             fetch(API_URL + '/' + id, { method: 'DELETE' })
                 .then(function() { fetchProducts(); });
         }
     }
 
-
+    // Reset state
     function resetForm() {
         document.getElementById('product-id').value = '';
         document.getElementById('product-form').reset();
         document.getElementById('form-title').innerText = "Add New Product";
-        document.getElementById('submit-btn').innerText = "Save Product";
+        document.getElementById('submit-btn').innerText = "Save Item";
         document.getElementById('cancel-btn').classList.add('hidden');
     }
 </script>

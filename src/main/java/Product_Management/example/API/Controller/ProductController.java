@@ -3,6 +3,7 @@ package Product_Management.example.API.Controller;
 import Product_Management.example.API.Model.Product;
 import java.util.List;
 import Product_Management.example.API.Service.ProductService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,12 +25,12 @@ public class ProductController {
     }
 
     @PostMapping
-    public Product create(@RequestBody Product product){
+    public Product create(@Valid @RequestBody Product product){
         return service.createProduct(product);
     }
 
     @PutMapping("/{id}")
-    public Product update(@PathVariable Long id,@RequestBody Product product){
+    public Product update(@PathVariable Long id,@Valid @RequestBody Product product){
         return  service.updateProduct(id,product);
     }
 
