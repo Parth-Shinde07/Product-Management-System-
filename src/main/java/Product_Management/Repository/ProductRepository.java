@@ -1,6 +1,6 @@
-package Product_Management.example.API.Repository;
+package Product_Management.Repository;
 
-import Product_Management.example.API.Model.Product;
+import Product_Management.Model.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

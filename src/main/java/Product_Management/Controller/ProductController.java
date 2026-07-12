@@ -1,8 +1,8 @@
-package Product_Management.example.API.Controller;
+package Product_Management.Controller;
 
-import Product_Management.example.API.Model.Product;
+import Product_Management.Model.Product;
 import java.util.List;
-import Product_Management.example.API.Service.ProductService;
+import Product_Management.Service.ProductService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

@@ -1,4 +1,4 @@
-package Product_Management.example.API.Model;
+package Product_Management.Model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
@@ -20,4 +20,7 @@ public class Product {
 
     @Min(value = 0, message = "Price cannot be negative")
     private double price;
+
+    @Min(value = 0,message = "Stock cannot be negative")
+    private int stockQuantity;
 }

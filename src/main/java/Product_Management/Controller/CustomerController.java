@@ -1,8 +1,8 @@
-package Product_Management.example.API.Controller;
+package Product_Management.Controller;
 
 
-import Product_Management.example.API.Model.Customer;
-import Product_Management.example.API.Repository.CustomerRepository;
+import Product_Management.Model.Customer;
+import Product_Management.Repository.CustomerRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;

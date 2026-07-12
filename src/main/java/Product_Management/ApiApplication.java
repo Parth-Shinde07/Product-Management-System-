@@ -1,4 +1,4 @@
-package Product_Management.example.API;
+package Product_Management;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

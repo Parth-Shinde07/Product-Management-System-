@@ -1,8 +1,8 @@
-package Product_Management.example.API.Controller;
+package Product_Management.Controller;
 
-import Product_Management.example.API.DTO.OrderRequest;
-import Product_Management.example.API.Model.Order;
-import Product_Management.example.API.Service.OrderService;
+import Product_Management.DTO.OrderRequest;
+import Product_Management.Model.Order;
+import Product_Management.Service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

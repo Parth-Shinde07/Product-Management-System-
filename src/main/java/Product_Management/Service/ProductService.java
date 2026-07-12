@@ -1,7 +1,7 @@
-package Product_Management.example.API.Service;
+package Product_Management.Service;
 
-import Product_Management.example.API.Model.Product;
-import Product_Management.example.API.Repository.ProductRepository;
+import Product_Management.Model.Product;
+import Product_Management.Repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;

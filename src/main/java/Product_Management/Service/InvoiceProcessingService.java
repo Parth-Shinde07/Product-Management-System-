@@ -1,4 +1,4 @@
-package Product_Management.example.API.Service;
+package Product_Management.Service;
 
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;

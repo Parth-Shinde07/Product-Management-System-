@@ -1,16 +1,18 @@
-package Product_Management.example.API.Service;
+package Product_Management.Service;
 
-import Product_Management.example.API.DTO.OrderRequest;
-import Product_Management.example.API.Model.Customer;
-import Product_Management.example.API.Model.Order;
-import Product_Management.example.API.Model.OrderItem;
-import Product_Management.example.API.Model.Product;
-import Product_Management.example.API.Repository.CustomerRepository;
-import Product_Management.example.API.Repository.OrderRepository;
-import Product_Management.example.API.Repository.ProductRepository;
+import Product_Management.DTO.OrderRequest;
+import Product_Management.Model.Customer;
+import Product_Management.Model.Order;
+import Product_Management.Model.OrderItem;
+import Product_Management.Model.Product;
+import Product_Management.Repository.CustomerRepository;
+import Product_Management.Repository.OrderRepository;
+import Product_Management.Repository.ProductRepository;
+import Product_Management.event.LowStockEvent;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -23,8 +25,11 @@ public class OrderService {
     @Autowired private CustomerRepository customerRepository;
     @Autowired private ProductRepository productRepository;
     @Autowired private InvoiceProcessingService invoiceService;
+    @Autowired private ApplicationEventPublisher eventPublisher;
 
-    @Transactional // 👈 CRITICAL: Ensures atomicity. If any line fails, database rolls back.
+    private static final int LOW_STOCK_THRESHOLD=5;
+
+    @Transactional
     public Order placeOrder(OrderRequest request) {
         // 1. Fetch and validate Customer
         Customer customer = customerRepository.findById(request.getCustomerId())
@@ -43,6 +48,18 @@ public class OrderService {
         for (OrderRequest.ItemRequest itemReq : request.getItems()) {
             Product product = productRepository.findById(itemReq.getProductId())
                     .orElseThrow(() -> new RuntimeException("Product not found with ID: " + itemReq.getProductId()));
+
+            if (product.getStockQuantity() < itemReq.getQuantity()) {
+                throw new RuntimeException("Insufficient stock for product: " + product.getName()
+                        + ". Available: " + product.getStockQuantity() + ", Requested: " + itemReq.getQuantity());
+            }
+
+            product.setStockQuantity(product.getStockQuantity() - itemReq.getQuantity());
+            productRepository.save(product);
+
+            if (product.getStockQuantity() <= LOW_STOCK_THRESHOLD) {
+                eventPublisher.publishEvent(new LowStockEvent(product.getId(), product.getName(), product.getStockQuantity()));
+            }
 
             OrderItem orderItem = new OrderItem();
             orderItem.setProduct(product);

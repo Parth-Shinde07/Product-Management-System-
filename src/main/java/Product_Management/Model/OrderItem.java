@@ -1,4 +1,4 @@
-package Product_Management.example.API.Model;
+package Product_Management.Model;
 
 import jakarta.persistence.*;
 import lombok.Data;

@@ -1,4 +1,4 @@
-package Product_Management.example.API.DTO;
+package Product_Management.DTO;
 
 import lombok.Data;
 
