@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Order Tracking Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+
+<!-- Navigation Bar -->
+<nav class="bg-slate-900 text-white shadow-md">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+        <span class="font-bold text-lg tracking-wider text-indigo-400">Enterprise Suite</span>
+        <div class="space-x-6">
+            <a href="index.html" class="hover:text-indigo-300 transition-colors font-medium">📦 Product Manager</a>
+            <a href="orders.html" class="hover:text-indigo-300 transition-colors font-medium border-b-2 border-indigo-500 pb-1">📈 Order Tracker</a>
+        </div>
+    </div>
+</nav>
+
+<div class="max-w-6xl mx-auto p-6">
+    <!-- Header Section -->
+    <header class="flex justify-between items-center border-b border-slate-200 pb-5 mb-8">
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight text-slate-900">Fulfillment Dashboard</h1>
+            <p class="text-slate-500 mt-1">Monitor real-time system transactions and order statuses.</p>
+        </div>
+        <div class="space-x-3">
+            <!-- 🔴 NEW CHECKOUT BUTTON -->
+            <button onclick="openCheckoutModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors cursor-pointer">
+                🛒 New Checkout
+            </button>
+            <button onclick="fetchOrders()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-colors cursor-pointer">
+                🔄 Refresh Dashboard
+            </button>
+        </div>
+    </header>
+
+    <!-- Stats Overview Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-xs">
+            <span class="text-sm font-medium text-slate-500 block">Total System Orders</span>
+            <span id="total-orders-count" class="text-3xl font-bold mt-2 block text-slate-900">0</span>
+        </div>
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-xs">
+            <span class="text-sm font-medium text-slate-500 block">Processing Queue</span>
+            <span id="processing-count" class="text-3xl font-bold mt-2 block text-amber-600">0</span>
+        </div>
+        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-xs">
+            <span class="text-sm font-medium text-slate-500 block">Total Revenue Managed</span>
+            <span id="total-revenue" class="text-3xl font-bold mt-2 block text-emerald-600">$0.00</span>
+        </div>
+    </div>
+
+    <!-- Orders Table Card -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <table class="w-full text-left border-collapse">
+            <thead>
+            <tr class="bg-slate-100 border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-600">
+                <th class="p-4">Order Number</th>
+                <th class="p-4">Customer</th>
+                <th class="p-4">Date Placed</th>
+                <th class="p-4">Total Amount</th>
+                <th class="p-4">Status</th>
+            </tr>
+            </thead>
+            <tbody id="orders-table-body" class="divide-y divide-slate-100">
+            <!-- Dynamic JavaScript Content Injected Here -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 🔴 NEW MODAL: DYNAMIC CHECKOUT FORM -->
+<div id="checkout-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-lg w-full p-6">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
+            <h3 class="text-lg font-bold text-slate-900">Create New Checkout Order</h3>
+            <button onclick="closeCheckoutModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl cursor-pointer">&times;</button>
+        </div>
+
+        <form id="checkout-form" class="space-y-4">
+            <!-- Customer Dropdown -->
+            <div>
+                <label class="block text-sm font-semibold text-slate-600 mb-1">Select Customer</label>
+                <select id="checkout-customer" required class="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                    <option value="">-- Choose a Customer --</option>
+                </select>
+            </div>
+
+            <!-- Product Items Selection -->
+            <div>
+                <label class="block text-sm font-semibold text-slate-600 mb-1">Select Product</label>
+                <select id="checkout-product" required class="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                    <option value="">-- Choose a Product --</option>
+                </select>
+            </div>
+
+            <!-- Quantity Selector -->
+            <div>
+                <label class="block text-sm font-semibold text-slate-600 mb-1">Quantity</label>
+                <input type="number" id="checkout-quantity" min="1" value="1" required class="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-2 pt-4 border-t border-slate-100">
+                <button type="button" onclick="closeCheckoutModal()" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 rounded-lg transition cursor-pointer">Cancel</button>
+                <button type="submit" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 rounded-lg transition shadow-sm cursor-pointer">Place Order</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Integration Script -->
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,5 +1,7 @@
 package Product_Management.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -21,6 +23,8 @@ public class Order {
 
     @ManyToOne
     @JoinColumn(name="customer_id" , nullable = false)
+    @JsonManagedReference
+    @JsonIgnore
     private Customer customer;
 
     @OneToMany(cascade = CascadeType.ALL,fetch = FetchType.LAZY)
