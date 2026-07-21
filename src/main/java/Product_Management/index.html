@@ -94,20 +94,25 @@
     const API_URL = 'http://localhost:8080/api/products';
     let allProducts = [];
 
+    // Global Authorization Helper
+    function getAuthHeaders() {
+        const token = localStorage.getItem("admin_jwt_token");
+        return token ? { "Authorization": `Bearer ${token}` } : {};
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         fetchProducts();
     });
 
-    // Form Submit Actions
-    document.getElementById('product-form').addEventListener('submit', function(e) {
+    // 1. Save / Update Product Form Submission
+    document.getElementById('product-form').addEventListener('submit', async function(e) {
         e.preventDefault();
 
         const id = document.getElementById('product-id').value;
         const name = document.getElementById('product-name').value;
         const price = parseFloat(document.getElementById('product-price').value);
-        const stock = parseInt(document.getElementById('product-stock').value); // 🔴 READ STOCK VALUE
+        const stock = parseInt(document.getElementById('product-stock').value);
 
-        // Include stockQuantity in payload!
         const productData = {
             name: name,
             price: price,
@@ -122,39 +127,67 @@
             method: 'POST'
         };
 
-        fetch(requestConfig.url, {
-            method: requestConfig.method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(productData)
-        })
-        .then(function(res) {
-            if(!res.ok) throw new Error("Validation Failed");
-            return res.json();
-        })
-        .then(function() {
+        try {
+            const res = await fetch(requestConfig.url, {
+                method: requestConfig.method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaders() // 🔴 ADDED AUTH HEADER HERE
+                },
+                body: JSON.stringify(productData)
+            });
+
+            if (res.status === 401 || res.status === 403) {
+                alert("Session expired or unauthorized. Please log in again.");
+                window.location.href = "orders.html";
+                return;
+            }
+
+            if (!res.ok) throw new Error("Validation Failed");
+
+            await res.json();
             fetchProducts();
             resetForm();
-        })
-        .catch(err => alert("Error saving data. Verify constraints are met."));
+        } catch (err) {
+            console.error(err);
+            alert("Error saving data. Verify constraints are met.");
+        }
     });
 
-    // Read All Products
-    function fetchProducts() {
-        fetch(API_URL)
-            .then(function(res) { return res.json(); })
-            .then(function(products) {
-                allProducts = products;
-                renderTable(allProducts);
-                calculateMetrics(allProducts);
+    // 2. Read All Products
+    async function fetchProducts() {
+        try {
+            const response = await fetch(API_URL, {
+                headers: {
+                    ...getAuthHeaders(), // 🔴 ADDED AUTH HEADER HERE
+                    "Accept": "application/json"
+                }
             });
+
+            if (response.status === 401 || response.status === 403) {
+                alert("Session expired or unauthorized. Redirecting to login...");
+                window.location.href = "orders.html";
+                return;
+            }
+
+            if (!response.ok) throw new Error("Failed to load backend product list.");
+
+            const products = await response.json();
+            allProducts = products; // Sync local state
+
+            renderTable(products);
+            calculateMetrics(products);
+        } catch (error) {
+            console.error("Error:", error);
+        }
     }
 
-    // Render Table Component
+    // 3. Render Table Component
     function renderTable(productsList) {
         const tbody = document.getElementById('product-table-body');
         tbody.innerHTML = '';
 
-        if (productsList.length === 0) {
+        if (!productsList || productsList.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-400 italic">No products match your criteria.</td></tr>';
             return;
         }
@@ -163,28 +196,28 @@
             const stockValue = product.stockQuantity !== undefined ? product.stockQuantity : 0;
             const stockClass = stockValue <= 5 ? "text-red-600 font-bold" : "text-slate-500";
 
-            var row = '<tr class="hover:bg-slate-50/70 transition-colors">' +
+            const row = '<tr class="hover:bg-slate-50/70 transition-colors">' +
                 '<td class="p-4 font-mono text-xs text-slate-400">' + product.id + '</td>' +
                 '<td class="p-4 font-medium text-slate-800">' + product.name + '</td>' +
                 '<td class="p-4 font-semibold text-slate-900">$' + product.price.toFixed(2) + '</td>' +
-                '<td class="p-4 ' + stockClass + '">' + stockValue + '</td>' + // 🔴 RENDER STOCK COLUMN
+                '<td class="p-4 ' + stockClass + '">' + stockValue + '</td>' +
                 '<td class="p-4 text-center space-x-1">' +
-                    '<button onclick="editProduct(' + product.id + ', \'' + product.name + '\', ' + product.price + ', ' + stockValue + ')" class="text-amber-600 hover:bg-amber-50 px-2.5 py-1 rounded-md text-sm font-medium transition cursor-pointer">Edit</button>' +
+                    '<button onclick="editProduct(' + product.id + ', \'' + product.name.replace(/'/g, "\\'") + '\', ' + product.price + ', ' + stockValue + ')" class="text-amber-600 hover:bg-amber-50 px-2.5 py-1 rounded-md text-sm font-medium transition cursor-pointer">Edit</button>' +
                     '<button onclick="deleteProduct(' + product.id + ')" class="text-red-600 hover:bg-red-50 px-2.5 py-1 rounded-md text-sm font-medium transition cursor-pointer">Delete</button>' +
                 '</td>' +
             '</tr>';
-            tbody.innerHTML += row;
+            tbody.insertAdjacentHTML('beforeend', row);
         });
     }
 
-    // Search Filtering Logic
+    // 4. Search Filtering Logic
     function filterProducts() {
         const query = document.getElementById('search-input').value.toLowerCase();
         const filtered = allProducts.filter(p => p.name.toLowerCase().includes(query));
         renderTable(filtered);
     }
 
-    // Analytics Calculator
+    // 5. Analytics Calculator
     function calculateMetrics(products) {
         const count = products.length;
         const totalValuation = products.reduce((sum, p) => sum + p.price, 0);
@@ -195,27 +228,44 @@
         document.getElementById('stat-avg-price').innerText = '$' + avg.toFixed(2);
     }
 
-    // Pre-Populate Fields for Editing
+    // 6. Pre-Populate Fields for Editing
     function editProduct(id, name, price, stock) {
         document.getElementById('product-id').value = id;
         document.getElementById('product-name').value = name;
         document.getElementById('product-price').value = price;
-        document.getElementById('product-stock').value = stock; // 🔴 PRE-POPULATE STOCK
+        document.getElementById('product-stock').value = stock;
 
         document.getElementById('form-title').innerText = "Modify Product #" + id;
         document.getElementById('submit-btn').innerText = "Apply Updates";
         document.getElementById('cancel-btn').classList.remove('hidden');
     }
 
-    // Delete Product
-    function deleteProduct(id) {
+    // 7. Delete Product
+    async function deleteProduct(id) {
         if (confirm('Permanently remove this product from inventory?')) {
-            fetch(API_URL + '/' + id, { method: 'DELETE' })
-                .then(function() { fetchProducts(); });
+            try {
+                const response = await fetch(API_URL + '/' + id, {
+                    method: 'DELETE',
+                    headers: { ...getAuthHeaders() } // 🔴 ADDED AUTH HEADER HERE
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    alert("Session expired or unauthorized.");
+                    window.location.href = "orders.html";
+                    return;
+                }
+
+                if (!response.ok) throw new Error("Failed to delete product.");
+
+                fetchProducts();
+            } catch (err) {
+                console.error(err);
+                alert("Could not remove product from database.");
+            }
         }
     }
 
-    // Reset state
+    // 8. Reset state
     function resetForm() {
         document.getElementById('product-id').value = '';
         document.getElementById('product-form').reset();
