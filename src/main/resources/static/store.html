@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Storefront</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+
+<!-- Store Navigation -->
+<nav class="bg-slate-900 text-white shadow-md">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+        <span class="font-bold text-lg text-indigo-400">🛍️ Enterprise Store</span>
+        <a href="admin.html" class="text-sm bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-md transition-colors">Admin Login →</a>
+    </div>
+</nav>
+
+<div class="max-w-6xl mx-auto p-6">
+    <header class="mb-8">
+        <h1 class="text-3xl font-bold text-slate-900">Available Products</h1>
+        <p class="text-slate-500 mt-1">Browse our inventory and place an order directly.</p>
+    </header>
+
+    <!-- Product Grid -->
+    <div id="product-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Dynamically populated via JS -->
+    </div>
+</div>
+
+<!-- Order Modal -->
+<div id="checkout-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+        <div class="flex justify-between items-center border-b pb-3 mb-4">
+            <h3 id="modal-product-title" class="text-lg font-bold text-slate-900">Place Order</h3>
+            <button onclick="closeCheckoutModal()" class="text-slate-400 hover:text-slate-600 font-bold">&times;</button>
+        </div>
+        <form id="customer-order-form" class="space-y-4">
+            <input type="hidden" id="selected-product-id">
+            <div>
+                <label class="block text-sm font-semibold text-slate-600 mb-1">Your Customer ID</label>
+                <input type="number" id="customer-id" required placeholder="e.g. 1" class="w-full p-2 border rounded-lg">
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-slate-600 mb-1">Quantity</label>
+                <input type="number" id="order-quantity" min="1" value="1" required class="w-full p-2 border rounded-lg">
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button type="button" onclick="closeCheckoutModal()" class="w-1/2 bg-slate-100 py-2 rounded-lg font-semibold">Cancel</button>
+                <button type="submit" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg font-semibold">Submit Order</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const API_PRODUCTS = "http://localhost:8080/api/products";
+    const API_ORDERS = "http://localhost:8080/api/orders";
+
+    document.addEventListener("DOMContentLoaded", fetchStoreProducts);
+
+    async function fetchStoreProducts() {
+        try {
+            const res = await fetch(API_PRODUCTS);
+            const products = await res.json();
+            const grid = document.getElementById("product-grid");
+            grid.innerHTML = "";
+
+            products.forEach(p => {
+                const card = `
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-900">${p.name}</h3>
+                            <p class="text-emerald-600 font-bold text-xl mt-2">$${p.price.toFixed(2)}</p>
+                            <p class="text-xs text-slate-400 mt-1">In Stock: ${p.stockQuantity}</p>
+                        </div>
+                        <button onclick="openOrderModal(${p.id}, '${p.name.replace(/'/g, "\\'")}')"
+                                class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg transition-colors">
+                            Buy Now
+                        </button>
+                    </div>
+                `;
+                grid.insertAdjacentHTML("beforeend", card);
+            });
+        } catch (err) {
+            console.error("Failed to load store products", err);
+        }
+    }
+
+    function openOrderModal(id, name) {
+        document.getElementById("selected-product-id").value = id;
+        document.getElementById("modal-product-title").textContent = `Order: ${name}`;
+        document.getElementById("checkout-modal").classList.remove("hidden");
+    }
+
+    function closeCheckoutModal() {
+        document.getElementById("checkout-modal").classList.add("hidden");
+        document.getElementById("customer-order-form").reset();
+    }
+
+    document.getElementById("customer-order-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const productId = parseInt(document.getElementById("selected-product-id").value);
+        const customerId = parseInt(document.getElementById("customer-id").value);
+        const quantity = parseInt(document.getElementById("order-quantity").value);
+
+        try {
+            const res = await fetch(`${API_ORDERS}/checkout`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ customerId, items: [{ productId, quantity }] })
+            });
+
+            if (!res.ok) throw new Error("Order failed. Check inventory or Customer ID.");
+            alert("Order placed successfully!");
+            closeCheckoutModal();
+            fetchStoreProducts();
+        } catch (err) {
+            alert(err.message);
+        }
+    });
+</script>
+</body>
+</html>

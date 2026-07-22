@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Management Suite</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+
+<!-- Admin Topbar -->
+<nav class="bg-slate-900 text-white shadow-md">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+        <span class="font-bold text-lg text-indigo-400">⚙️ Admin Console</span>
+        <div class="flex gap-4">
+            <button onclick="switchTab('products')" class="hover:text-indigo-300 font-medium">Products CRUD</button>
+            <button onclick="switchTab('orders')" class="hover:text-indigo-300 font-medium">Customer Orders</button>
+            <button onclick="switchTab('reports')" class="hover:text-indigo-300 font-medium">Reports</button>
+            <a href="store.html" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-md">View Store →</a>
+        </div>
+    </div>
+</nav>
+
+<div class="max-w-6xl mx-auto p-6">
+
+    <!-- SECTION 1: PRODUCT CRUD -->
+    <section id="tab-products" class="space-y-6">
+        <h2 class="text-2xl font-bold">Product Management (CRUD)</h2>
+        <form id="product-crud-form" class="bg-white p-4 rounded-xl border border-slate-200 flex gap-4 items-end">
+            <input type="hidden" id="prod-id">
+            <div class="flex-1">
+                <label class="text-xs font-semibold text-slate-500">Name</label>
+                <input type="text" id="prod-name" required class="w-full p-2 border rounded-lg">
+            </div>
+            <div>
+                <label class="text-xs font-semibold text-slate-500">Price ($)</label>
+                <input type="number" step="0.01" id="prod-price" required class="w-28 p-2 border rounded-lg">
+            </div>
+            <div>
+                <label class="text-xs font-semibold text-slate-500">Stock</label>
+                <input type="number" id="prod-stock" required class="w-24 p-2 border rounded-lg">
+            </div>
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-lg">Save</button>
+        </form>
+
+        <table class="w-full bg-white rounded-xl border text-left overflow-hidden">
+            <thead class="bg-slate-100 text-xs uppercase text-slate-600 border-b">
+            <tr><th class="p-3">ID</th><th class="p-3">Name</th><th class="p-3">Price</th><th class="p-3">Stock</th><th class="p-3 text-right">Actions</th></tr>
+            </thead>
+            <tbody id="admin-products-body" class="divide-y"></tbody>
+        </table>
+    </section>
+
+    <!-- SECTION 2: CUSTOMER ORDERS -->
+    <section id="tab-orders" class="hidden space-y-6">
+        <h2 class="text-2xl font-bold">Customer Orders Queue</h2>
+        <table class="w-full bg-white rounded-xl border text-left overflow-hidden">
+            <thead class="bg-slate-100 text-xs uppercase text-slate-600 border-b">
+            <tr><th class="p-3">Order #</th><th class="p-3">Customer</th><th class="p-3">Total</th><th class="p-3">Status</th><th class="p-3 text-right">Update Status</th></tr>
+            </thead>
+            <tbody id="admin-orders-body" class="divide-y"></tbody>
+        </table>
+    </section>
+
+    <!-- SECTION 3: REPORT GENERATION -->
+    <section id="tab-reports" class="hidden space-y-6">
+        <h2 class="text-2xl font-bold">Sales & Inventory Reports</h2>
+        <div class="bg-white p-6 rounded-xl border border-slate-200 space-y-4">
+            <p class="text-sm text-slate-500">Export system summaries into CSV format for offline reporting.</p>
+            <div class="flex gap-4">
+                <button onclick="generateReport('sales')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium">📊 Export Sales Report (CSV)</button>
+                <button onclick="generateReport('inventory')" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg font-medium">📦 Export Low Stock Report (CSV)</button>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<script>
+    const API_URL = "http://localhost:8080/api";
+    function getAuthHeaders() {
+        const token = localStorage.getItem("admin_jwt_token");
+        return token ? { "Authorization": `Bearer ${token}` } : {};
+    }
+
+    // Tab Navigation Switcher
+    function switchTab(tabName) {
+        ["products", "orders", "reports"].forEach(t => document.getElementById(`tab-${t}`).classList.add("hidden"));
+        document.getElementById(`tab-${tabName}`).classList.remove("hidden");
+        if(tabName === 'products') loadAdminProducts();
+        if(tabName === 'orders') loadAdminOrders();
+    }
+
+    // 1. Load Admin Products
+    async function loadAdminProducts() {
+        const res = await fetch(`${API_URL}/products`, { headers: getAuthHeaders() });
+        const products = await res.json();
+        const tbody = document.getElementById("admin-products-body");
+        tbody.innerHTML = products.map(p => `
+            <tr>
+                <td class="p-3 font-mono text-xs">${p.id}</td>
+                <td class="p-3 font-medium">${p.name}</td>
+                <td class="p-3">$${p.price.toFixed(2)}</td>
+                <td class="p-3">${p.stockQuantity}</td>
+                <td class="p-3 text-right">
+                    <button onclick="deleteProduct(${p.id})" class="text-rose-600 hover:underline text-sm">Delete</button>
+                </td>
+            </tr>
+        `).join("");
+    }
+
+    // Save/Update Product CRUD
+    document.getElementById("product-crud-form").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const productData = {
+            name: document.getElementById("prod-name").value,
+            price: parseFloat(document.getElementById("prod-price").value),
+            stockQuantity: parseInt(document.getElementById("prod-stock").value)
+        };
+        await fetch(`${API_URL}/products`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+            body: JSON.stringify(productData)
+        });
+        document.getElementById("product-crud-form").reset();
+        loadAdminProducts();
+    });
+
+    async function deleteProduct(id) {
+        if(confirm("Delete this product?")) {
+            await fetch(`${API_URL}/products/${id}`, { method: "DELETE", headers: getAuthHeaders() });
+            loadAdminProducts();
+        }
+    }
+
+    // 2. Load Admin Orders
+    async function loadAdminOrders() {
+        const res = await fetch(`${API_URL}/orders`, { headers: getAuthHeaders() });
+        const orders = await res.json();
+        const tbody = document.getElementById("admin-orders-body");
+        tbody.innerHTML = orders.map(o => `
+            <tr>
+                <td class="p-3 font-mono text-xs">${o.orderNumber}</td>
+                <td class="p-3">${o.customer ? o.customer.name || o.customer : 'Guest'}</td>
+                <td class="p-3 font-semibold">$${o.totalAmount.toFixed(2)}</td>
+                <td class="p-3"><span class="px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800">${o.status}</span></td>
+                <td class="p-3 text-right">
+                    <select onchange="updateOrderStatus(${o.id}, this.value)" class="border text-xs p-1 rounded">
+                        <option value="PROCESSING" ${o.status==='PROCESSING'?'selected':''}>PROCESSING</option>
+                        <option value="SHIPPED" ${o.status==='SHIPPED'?'selected':''}>SHIPPED</option>
+                        <option value="DELIVERED" ${o.status==='DELIVERED'?'selected':''}>DELIVERED</option>
+                    </select>
+                </td>
+            </tr>
+        `).join("");
+    }
+
+    async function updateOrderStatus(id, status) {
+        await fetch(`${API_URL}/orders/${id}/status`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+            body: JSON.stringify({ status })
+        });
+    }
+
+    // 3. Generate CSV Reports
+    async function generateReport(type) {
+        if (type === 'sales') {
+            const res = await fetch(`${API_URL}/orders`, { headers: getAuthHeaders() });
+            const orders = await res.json();
+
+            let csvContent = "data:text/csv;charset=utf-8,OrderNumber,TotalAmount,Status\n";
+            orders.forEach(o => { csvContent += `${o.orderNumber},${o.totalAmount},${o.status}\n`; });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `sales_report_${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+        }
+    }
+
+    // Default tab on load
+    loadAdminProducts();
+</script>
+</body>
+</html>
